@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skincare Formulation Calculator</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 900px;
+            margin: auto;
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+        }
+        .controls, .results {
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .formulations-list label {
+            display: block;
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+        .formulations-list input[type="checkbox"] {
+            margin-right: 8px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="number"], button {
+            padding: 8px 12px;
+            margin-top: 5px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            border: none;
+            margin-top: 15px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #results-individual, #results-total {
+            margin-top: 20px;
+        }
+        #results-individual div {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed #eee;
+        }
+        #results-individual div:last-child {
+            border-bottom: none;
+        }
+        ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        li {
+            margin-bottom: 3px;
+        }
+        .ingredient-name {
+            display: inline-block;
+            min-width: 250px; /* Adjust as needed */
+        }
+        .ingredient-weight {
+            font-weight: bold;
+        }
+         @media (max-width: 600px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Skincare Formulation Calculator</h1>
+
+    <div class="container">
+        <div class="controls">
+            <h2>Controls</h2>
+
+            <div class="formulations-list">
+                <h3>Select Formulations:</h3>
+                <div id="formulationCheckboxes"></div>
+            </div>
+
+            <div>
+                <label for="batchSize">Batch Size per Formulation (kg):</label>
+                <input type="number" id="batchSize" value="4" min="0.01" step="0.1">
+            </div>
+
+            <button id="calculateBtn">Calculate Quantities</button>
+        </div>
+
+        <div class="results">
+            <h2>Results</h2>
+            <div id="results-individual">
+                <h3>Individual Formulation Breakdown:</h3>
+                <p>Select formulations and click Calculate.</p>
+                </div>
+            <hr>
+            <div id="results-total">
+                <h3>Consolidated Total for Supplier:</h3>
+                 <p>Select formulations and click Calculate.</p>
+                </div>
+        </div>
+    </div>
+
+    <script>
+        const formulations = [
+            {
+                name: "ULMG 025",
+                ingredients: [
+                    { name: "Distilled Water", percentage: 61.00 },
+                    { name: "Propylene Glycol", percentage: 4.00 },
+                    { name: "Allantoin", percentage: 0.30 },
+                    { name: "Niacinamide", percentage: 2.50 },
+                    { name: "DL Panthenol", percentage: 1.00 },
+                    { name: "Hyaluronic Acid LMW (2.5% Solution)", percentage: 20.00 },
+                    { name: "EDTA", percentage: 0.10 },
+                    { name: "Color (1% Solution)", percentage: 0.10 },
+                    { name: "Tri Ethanol Amine", percentage: 0.80 },
+                    { name: "Carbomer 940 (Powder)", percentage: 0.70 },
+                    { name: "Carbomer ELT 10 (Powder)", percentage: 0.30 },
+                    { name: "Dimethicone", percentage: 3.00 },
+                    { name: "PEG 6 caprylic/capric Triglycerides", percentage: 3.00 },
+                    { name: "Stearic Acid", percentage: 0.50 },
+                    { name: "Fragrance Oil", percentage: 0.50 },
+                    { name: "Phenoxy Ethanol", percentage: 0.50 },
+                    { name: "Vitamin E Oil", percentage: 0.50 }
+                ]
+            },
+            {
+                name: "ULMG 031",
+                ingredients: [
+                    { name: "Distilled Water", percentage: 63.00 },
+                    { name: "Propylene Glycol", percentage: 4.00 },
+                    { name: "Allantoin", percentage: 0.30 },
+                    { name: "Niacinamide", percentage: 2.50 },
+                    { name: "DL Panthenol", percentage: 1.00 },
+                    { name: "Hyaluronic Acid LMW (2.5% Solution)", percentage: 20.00 },
+                    { name: "EDTA", percentage: 0.10 },
+                    { name: "Color (1% Solution)", percentage: 0.10 },
+                    { name: "Phenoxy Ethanol", percentage: 1.00 },
+                    { name: "Aristoflex AVC", percentage: 1.00 },
+                    { name: "Dimethicone", percentage: 3.00 },
+                    { name: "Fragrance Oil", percentage: 1.00 }
+                ]
+            },
+            {
+                name: "BODY YOGURT 001 B",
+                ingredients: [
+                    { name: "Grapeseed Oil", percentage: 9.00 },
+                    { name: "PEG 100 Stearate", percentage: 1.50 },
+                    { name: "Carbomer 940 (Powder)", percentage: 1.50 },
+                    { name: "Distilled Water", percentage: 43.00 },
+                    { name: "Rose Water", percentage: 25.00 },
+                    { name: "Propylene Glycol", percentage: 5.00 },
+                    { name: "Hyaluronic Acid LMW (2.5% Solution)", percentage: 10.00 },
+                    { name: "Cetyl Alcohol", percentage: 3.00 },
+                    { name: "Vitamin E Oil", percentage: 1.00 },
+                    { name: "Niacinamide", percentage: 4.00 },
+                    { name: "Phenoxy Ethanol", percentage: 1.00 }
+                ]
+            },
+            {
+                name: "SOOTHING EYE GEL 024",
+                ingredients: [
+                    { name: "Hyaluronic Acid LMW (2.5% Solution)", percentage: 15.00 },
+                    { name: "Rose Water", percentage: 60.00 },
+                    { name: "Distilled Water", percentage: 10.00 },
+                    { name: "Propylene Glycol", percentage: 2.00 },
+                    { name: "DL Panthenol", percentage: 3.00 },
+                    { name: "Dimethicone", percentage: 2.00 },
+                    { name: "Carbomer 940 (Powder)", percentage: 0.40 },
+                    { name: "Phenoxy Ethanol", percentage: 1.00 },
+                    { name: "Allantoin", percentage: 0.30 },
+                    { name: "Sodium Ascorbyl Phosphate (SAP)", percentage: 1.50 }
+                ]
+            },
+            {
+                name: "BODY MILK 002",
+                ingredients: [
+                    { name: "Distilled Water", percentage: 49.00 },
+                    { name: "Rose Water", percentage: 22.50 },
+                    { name: "Hyaluronic Acid LMW (2.5% Solution)", percentage: 10.00 },
+                    { name: "PEG 100 Stearate", percentage: 1.50 },
+                    { name: "Grapeseed Oil", percentage: 8.00 },
+                    { name: "Emulsifying Wax NF", percentage: 1.00 },
+                    { name: "Cyclo Methicone", percentage: 2.00 },
+                    { name: "Cetyl Alcohol", percentage: 2.50 },
+                    { name: "Allantoin", percentage: 0.30 },
+                    { name: "PEG 6 caprylic/capric Triglycerides", percentage: 3.00 },
+                    { name: "Stearic Acid", percentage: 0.50 },
+                    { name: "Fragrance Oil", percentage: 0.50 },
+                    { name: "Phenoxy Ethanol", percentage: 0.50 },
+                    { name: "Vitamin E Oil", percentage: 0.50 }
+                ]
+            },
+            {
+                name: "BODY YOGURT 005",
+                ingredients: [
+                    { name: "Distilled Water", percentage: 40.70 },
+                    { name: "Rose Water", percentage: 30.00 },
+                    { name: "Propylene Glycol", percentage: 5.00 },
+                    { name: "Arlycel 165", percentage: 3.50 },
+                    { name: "PEG 6 caprylic/capric Triglycerides", percentage: 7.00 },
+                    { name: "Dimethicone", percentage: 2.00 }, // First instance
+                    { name: "Niacinamide", percentage: 4.00 },
+                    { name: "Allantoin", percentage: 0.30 },
+                    { name: "Poly Quaternium 7", percentage: 1.00 },
+                    { name: "Fragrance Oil", percentage: 1.00 },
+                    { name: "Dimethicone", percentage: 1.00 }  // Second instance
+                ]
+            },
+            {
+                name: "SUN SCREEN 003",
+                ingredients: [
+                    { name: "Distilled Water", percentage: 45.35 },
+                    { name: "Rose Water", percentage: 15.00 },
+                    { name: "Niacinamide", percentage: 5.00 },
+                    { name: "Propylene Glycol", percentage: 5.00 },
+                    { name: "Arlycel 165", percentage: 3.50 },
+                    { name: "PEG 6 caprylic/capric Triglycerides", percentage: 16.00 },
+                    { name: "Phenoxy Ethanol", percentage: 1.00 }, // First instance
+                    { name: "Allantoin", percentage: 0.15 },
+                    { name: "Phenoxy Ethanol", percentage: 1.00 }, // Second instance
+                    { name: "Vitamin E Oil", percentage: 1.00 },
+                    { name: "Poly Quaternium 7", percentage: 0.50 },
+                    { name: "Fragrance Oil", percentage: 1.00 },
+                    { name: "Dimethicone", percentage: 3.00 },
+                    { name: "Zinc Oxide Powder", percentage: 5.00 },
+                    { name: "Titanium Dioxide Powder", percentage: 2.50 }
+                ]
+            },
+            {
+                name: "GLYCOLIC ACID EXFOLIATING TONER 001",
+                ingredients: [
+                    { name: "Distilled Water", percentage: 45.00 },
+                    { name: "Rose Water", percentage: 25.00 },
+                    { name: "Niacinamide", percentage: 2.50 },
+                    { name: "Allantoin", percentage: 0.30 },
+                    { name: "Witch Hazel Distillate", percentage: 2.00 },
+                    { name: "Chamomile Extract", percentage: 2.00 },
+                    { name: "Tri Ethanol Amine", percentage: 0.80 }, // First instance
+                    { name: "Aristoflex AVC", percentage: 0.50 },
+                    { name: "Phenoxy Ethanol", percentage: 1.00 },
+                    { name: "Glycolic Acid", percentage: 10.00 },
+                    { name: "Tri Ethanol Amine", percentage: 8.00 }, // Second instance
+                    { name: "Vitamin E Oil", percentage: 0.50 },
+                    { name: "Tea Tree Oil", percentage: 0.30 }
+                ]
+            },
+            {
+                name: "BALANCING TONER 001",
+                ingredients: [
+                    { name: "Distilled Water", percentage: 49.00 },
+                    { name: "Rose Water", percentage: 40.00 },
+                    { name: "Sodium Lactate", percentage: 2.00 }, // First instance
+                    { name: "DL Panthenol", percentage: 2.00 },
+                    { name: "Sodium Lactate", percentage: 2.00 }, // Second instance
+                    { name: "Silk Protein", percentage: 1.00 },
+                    { name: "Vitamin E Oil", percentage: 1.00 },
+                    { name: "Aristoflex AVC", percentage: 0.50 },
+                    { name: "Phenoxy Ethanol", percentage: 1.00 },
+                    { name: "Citric Acid", percentage: 0.05 }
+                ]
+            },
+            {
+                name: "UNDER EYE SERUM 002",
+                ingredients: [
+                    { name: "Hyaluronic Acid LMW (2.5% Solution)", percentage: 15.00 },
+                    { name: "Rose Water", percentage: 60.00 },
+                    { name: "Niacinamide", percentage: 4.00 }, // First instance
+                    { name: "Propylene Glycol", percentage: 5.00 },
+                    { name: "Dimethicone", percentage: 2.00 },
+                    { name: "Carbomer 940 (Powder)", percentage: 0.40 },
+                    { name: "Phenoxy Ethanol", percentage: 1.00 },
+                    { name: "Niacinamide", percentage: 4.00 }, // Second instance
+                    { name: "Sodium Ascorbyl Phosphate (SAP)", percentage: 1.50 }
+                ]
+            },
+            {
+                name: "ACNE CONTROL SERUM",
+                ingredients: [
+                    { name: "Salicylic Acid", percentage: 1.00 },
+                    { name: "Tea Tree Oil", percentage: 0.50 },
+                    { name: "Niacinamide", percentage: 4.00 },
+                    { name: "Propylene Glycol", percentage: 4.00 },
+                    { name: "Glycerine", percentage: 1.00 },
+                    { name: "Poly Sorbate 20", percentage: 2.00 },
+                    { name: "DL Panthenol", percentage: 2.00 },
+                    { name: "Allantoin", percentage: 0.30 },
+                    { name: "Phenoxy Ethanol", percentage: 0.50 }, // First instance
+                    { name: "Distilled Water", percentage: 83.00 },
+                    { name: "Aristoflex AVC", percentage: 0.50 },
+                    { name: "Phenoxy Ethanol", percentage: 1.00 }  // Second instance
+                ]
+            },
+            {
+                name: "GENTLE GEL CLEANSER 005",
+                ingredients: [
+                    { name: "Distilled Water", percentage: 75.00 },
+                    { name: "Cationic Guar", percentage: 1.00 },
+                    { name: "Glycerine", percentage: 2.00 },
+                    { name: "Niacinamide", percentage: 2.00 },
+                    { name: "Cocamidopropyl Betaine (CAB)", percentage: 10.00 },
+                    { name: "APG 0810", percentage: 4.00 },
+                    { name: "Sodium Lauryl Sarcosinate", percentage: 3.00 },
+                    { name: "PEG 7 Glyceryl Cocoate", percentage: 2.00 },
+                    { name: "Citric Acid", percentage: 0.05 },
+                    { name: "Phenoxy Ethanol", percentage: 0.50 },
+                    { name: "DMDM Preservative", percentage: 0.10 }
+                ]
+            },
+            {
+                name: "Niacinamide Hyaluronic and Zinc Serum",
+                ingredients: [
+                    { name: "Niacinamide", percentage: 10.00 },
+                    { name: "Zinc PCA", percentage: 1.00 },
+                    { name: "Allantoin", percentage: 0.30 },
+                    { name: "Aloe Vera Extract", percentage: 0.10 },
+                    { name: "Phenoxy Ethanol", percentage: 0.50 },
+                    { name: "Distilled Water", percentage: 86.00 },
+                    { name: "DMDM Preservative", percentage: 0.10 },
+                    { name: "Ethyl Hexyl Glycerine", percentage: 0.50 },
+                    { name: "Hydroxy Propyl Methyl Cellulose (HPMC)", percentage: 1.00 }
+                ]
+            },
+            {
+                name: "Vitamin C Serum",
+                ingredients: [
+                    { name: "Distilled Water", percentage: 81.50 },
+                    { name: "Propylene Glycol", percentage: 5.00 },
+                    { name: "Hyaluronic Acid NMW Powder", percentage: 1.00 }, // First instance
+                    { name: "Panthanol Powder (Vitamin B5)", percentage: 1.00 }, // First instance
+                    { name: "3.0 Ethyl Ascorbic Acid", percentage: 5.00 },
+                    { name: "Allantoin", percentage: 0.30 },
+                    { name: "Ferulic Acid", percentage: 0.50 },
+                    { name: "Hyaluronic Acid NMW Powder", percentage: 2.00 }, // Second instance
+                    { name: "Panthanol Powder (Vitamin B5)", percentage: 4.00 }, // Second instance
+                    { name: "Chamomile Extract", percentage: 0.50 },
+                    { name: "Phenoxy Ethanol", percentage: 0.50 }, // First instance
+                    { name: "Phenoxy Ethanol", percentage: 1.00 }, // Second instance
+                    { name: "Cyclo Methicone", percentage: 2.00 }
+                ]
+            }
+        ];
+
+        const formulationCheckboxesContainer = document.getElementById('formulationCheckboxes');
+        const batchSizeInput = document.getElementById('batchSize');
+        const calculateBtn = document.getElementById('calculateBtn');
+        const resultsIndividualDiv = document.getElementById('results-individual');
+        const resultsTotalDiv = document.getElementById('results-total');
+
+        // Populate checkboxes
+        formulations.forEach((formulation, index) => {
+            const label = document.createElement('label');
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.value = index; // Use index to easily find formulation data
+            checkbox.id = `formulation_${index}`;
+            label.htmlFor = `formulation_${index}`;
+            label.appendChild(checkbox);
+            label.appendChild(document.createTextNode(formulation.name));
+            formulationCheckboxesContainer.appendChild(label);
+        });
+
+        // Calculation function
+        function calculateQuantities() {
+            const batchSize = parseFloat(batchSizeInput.value);
+            if (isNaN(batchSize) || batchSize <= 0) {
+                alert("Please enter a valid positive batch size.");
+                return;
+            }
+
+            const selectedIndices = [];
+            formulationCheckboxesContainer.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
+                selectedIndices.push(parseInt(checkbox.value));
+            });
+
+            if (selectedIndices.length === 0) {
+                alert("Please select at least one formulation.");
+                resultsIndividualDiv.innerHTML = '<h3>Individual Formulation Breakdown:</h3><p>No formulations selected.</p>';
+                resultsTotalDiv.innerHTML = '<h3>Consolidated Total for Supplier:</h3><p>No formulations selected.</p>';
+                return;
+            }
+
+            let individualResultsHTML = '<h3>Individual Formulation Breakdown:</h3>';
+            const totalIngredients = {}; // { ingredientName: totalWeight }
+
+            selectedIndices.forEach(index => {
+                const formulation = formulations[index];
+                individualResultsHTML += `<div><h4>${formulation.name} (Batch: ${batchSize} kg)</h4><ul>`;
+                let formulationPercentageSum = 0; // For checking totals
+
+                formulation.ingredients.forEach(ingredient => {
+                    const weight = batchSize * (ingredient.percentage / 100);
+                    formulationPercentageSum += ingredient.percentage;
+
+                    individualResultsHTML += `<li><span class="ingredient-name">${ingredient.name} (${ingredient.percentage.toFixed(2)}%):</span> <span class="ingredient-weight">${weight.toFixed(4)} kg</span></li>`;
+
+                    // Aggregate totals
+                    if (totalIngredients[ingredient.name]) {
+                        totalIngredients[ingredient.name] += weight;
+                    } else {
+                        totalIngredients[ingredient.name] = weight;
+                    }
+                });
+
+                individualResultsHTML += `</ul>`;
+                // Optional: Add a note if percentages don't sum to 100%
+                 if (Math.abs(formulationPercentageSum - 100) > 0.1) { // Allow for small floating point differences
+                     individualResultsHTML += `<p style="font-size: 0.9em; color: #888;"><i>Note: Original percentages sum to ${formulationPercentageSum.toFixed(2)}%.</i></p>`;
+                 }
+
+                individualResultsHTML += `</div>`;
+            });
+
+            let totalResultsHTML = '<h3>Consolidated Total for Supplier:</h3><ul>';
+            // Sort ingredients alphabetically for the total list
+            const sortedIngredients = Object.keys(totalIngredients).sort();
+
+            sortedIngredients.forEach(name => {
+                 totalResultsHTML += `<li><span class="ingredient-name">${name}:</span> <span class="ingredient-weight">${totalIngredients[name].toFixed(4)} kg</span></li>`;
+            });
+            totalResultsHTML += '</ul>';
+
+            resultsIndividualDiv.innerHTML = individualResultsHTML;
+            resultsTotalDiv.innerHTML = totalResultsHTML;
+        }
+
+        // Attach event listener
+        calculateBtn.addEventListener('click', calculateQuantities);
+
+    </script>
+
+</body>
+</html>
